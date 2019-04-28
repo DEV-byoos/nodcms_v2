@@ -1,0 +1,224 @@
+Autheur   Gabriel BOBARD  gbobard@gmail.com    http://byoos.eu  pour la communauté nodcms    version du 2019/04/25
+Objectif principal de ces travaux:
+migration de NodCMS de PHP 5.6 vers php 7.3 et codeIgniter 3.1.10 stratégie password BCRYPT
+
+ORGANISATION
+BYOOS solutions Cameroun  http://byoos.net
+download on github   https://github.com/khodakhah/nodcms.git
+explore   https://github.com/khodakhah/nodcms
+
+Installation de NodCMS Current version is 1.0 and is developed by NodCMS Group.
+
+CONFIGURATION
+PHP version: 7.3.2-3+0~20190208150725.31+stretch~1.gbp0912bd 
+Server version : 10.2.22-MariaDB-10.2.22+maria~stretch-log - mariadb.org binary distribution 
+
+********** START debug *************
+IN  class Inst_Databases
+
+FIX  replace function Inst_Databases() to  public function __construct()
+
+IN class.databases.php   
+
+FIX  replace  driver mysql to mysqli
+
+
+IN		/** 
+		 *  Run a query to the selected database, or run
+		 *  multiple queries (if parameter is an array)
+		 */
+        function RunQuery($query)
+
+FIX		$result = mysqli_query( $this->connection, $query);// BYOOS_tag modif mysqli_query for paramters $this->connection
+
+
+IN          /** 
+		 *  Get a list of databases and their table count
+		 */
+        function GetDatabaseList($includeSelectedDatabase=true)
+
+		while ($row = mysqli_fetch_object($result)) 
+		{
+			$tbresult = $this->RunQuery("SHOW TABLES FROM ".$row->Database);                    
+			$dblist[] = array(
+				'name'  => $row->Database, 
+FIX				'tbcount' => is_countable( $tbresult ) ? mysqli_num_rows($tbresult) : false
+				); // BYOOS_tag modif test is_countable
+		}
+
+
+IN  /nodcms/system
+replace at 3.1.10 version codeIgniter
+
+
+IN nodcms/helpers/nodcms_form_helper.php
+
+
+FIX 
+this a simple problem, u must declare this fuction.
+see sample on nodcms_from_helper.php
+function mk_use_uploadbox($this){
+// ... original your function
+}
+
+Replace like this on all fuction:
+if (!function_exists('mk_use_uploadbox')) {
+function mk_use_uploadbox($this){
+// ... proceed to declare your function
+}
+}
+and for running with php 7.1 this fuction like this:
+$CI = $this; //declare
+function mk_use_uploadbox($CI){
+// ... original your function
+}
+
+IN install/installer/masks/nodcms.sql
+-- Dumping structure for table nodcms_demo.users
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE IF NOT EXISTS `users` (
+.......
+  `password` varchar(255) NOT NULL, //  replace varchar(50)  to varchar(255)
+
+
+IN install/installer/masks/nodcms.sql
+
+
+FIX  added this line in table INSERT INTO `languages`
+(4, 'french', 'fr', 1, 0, 4, 1555744369, 0, 'upload_file/lang/french_64x64.png');
+
+
+
+IN  install/installer/assets/class.databases.php
+	/** 
+	 *  Run a query to the selected database, or run
+	 *  multiple queries (if parameter is an array)
+	 */
+function RunQuery($query)
+{
+
+
+FIX   complete end of line and new ligne
+	// Execute the query and return the results with
+	// success state and error message if set
+	$q = explode(';'.PHP_EOL,$q);//BYOOS_tag modif PHP_EOL
+
+IN /nodcms/models/NodCMS_admin_sign_model.pp	
+	/**
+	 * resolve_user_login function.
+	 * 
+	 * @access public
+	 * @param string $username
+	 * @param string $password
+	 * @return bool true on success, false on failure
+	 */
+	public function resolve_user_login($username, $password) {
+
+		$this->db->select('password');
+		$this->db->from('users');
+		$this->db->where('username', $username);
+		$hash = $this->db->get()->row('password');
+		if ( $this->verify_password_hash($password, $hash) ){//Modif BYOOS_tag 
+			$this->db->where('username', $username);
+			$query = $this->db->get('users');
+			return $query;
+		}
+		//return  0;
+	}
+
+function added new strategy password BCRYPT
+	
+	/**
+	 * hash_password function.
+	 * 
+	 * @access private
+	 * @param string $password
+	 * @return string|bool could be a string on success, or bool false on failure
+	 */
+	private function hash_password($password) {
+		
+		return password_hash($password, PASSWORD_BCRYPT);
+		
+	}
+	
+	/**
+	 * verify_password_hash function.
+	 * 
+	 * @access private
+	 * @param string $password
+	 * @param string $hash
+	 * @return bool
+	 */
+	private function verify_password_hash($password, $hash) {
+		
+		return password_verify($password, $hash);
+		
+	}
+	
+IN /nodcms/models/NodCMS_admin_sign.pp		
+    function login()
+		.......
+        $password = $this->input->post('password');
+        $result= $this->NodCMS_admin_sign_model->resolve_user_login($username, $password);
+        if($result){
+			$tam=$result->result_array(); // modif BYOOS_tag
+		}
+        if($result && ($tam[0]['group_id']==1 || $tam[0]['group_id']==2))
+        {   
+		.......
+		
+
+
+IN  nodcms/helpers/nodcms_general_helper.php
+replace the $_SESSIONS  in the views
+
+FIX added this function 
+/**
+ * helpers session function.
+ * 
+ * @access public
+ * @param string code session
+ * @return array on success, or bool false on failure
+ * added BYOOS 2019
+ */
+ if ( ! function_exists('_mysession')){
+	function _mysession($mycle='user')
+	{
+		$CI =& get_instance();
+		$mysession = array();
+		if(!null ==$CI->session->has_userdata($mycle) ){
+			$mysession=$CI->session->userdata($mycle);
+		}
+		return $mysession;
+	}
+}
+
+USE session IN TEMPLATE
+$mysession = _mysession('settings');
+echo $mysession["code"]; ?>"> 
+/*
+		echo 'test session ';
+		var_dump( $this->session->has_userdata('user'), $this->session->has_userdata('settings'));
+		echo '<pre>';print_r( $this->session->all_userdata() ); echo '</pre>';
+		echo '<pre>';print_r( $this->session->userdata('user') ); echo '</pre>';
+		echo '<pre>';print_r( $this->session->userdata('settings') ); echo '</pre>';die;
+		if($this->session->has_userdata('user')){
+			$mysession=_mysession('user');
+			 echo '<pre>';print_r( $mysession); echo '</pre>';
+		}
+		if($this->session->has_userdata('settings')){
+			$mysession=_mysession('settings');
+			 echo '<pre>';print_r( $mysession); echo '</pre>';
+		}
+*/
+
+IN  /root/installer/installer.php
+password amin created with  md5() function !!!
+FIX 
+replace  with  hash_password( ..., BCRYPT) fonction PHP7
+					if($validData)
+					{
+						// Create an hashes for this valid data
+						$keywords['admin']['admin_password'] = password_hash($data['admin_password'], PASSWORD_BCRYPT );
+						$keywords['admin']['admin_hashkey'] = password_hash($data['admin_username'].$keywords['admin']['admin_password'].$data['admin_email'] , PASSWORD_BCRYPT);   
+********** END debug *************
