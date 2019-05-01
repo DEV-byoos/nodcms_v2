@@ -1,6 +1,6 @@
 Autheur   Gabriel BOBARD  gbobard@gmail.com    http://byoos.eu  pour la communauté nodcms    version du 2019/04/25
 Objectif principal de ces travaux:
-migration de NodCMS de PHP 5.6 vers php 7.3 et codeIgniter 3.1.10 stratégie password BCRYPT
+migration de NodCMS de PHP 5.6 vers php 7.3 et codeIgniter 3.1.10 stratégie password BCRYPT -Mysqli - tanslate Franch Language
 
 ORGANISATION
 BYOOS solutions Cameroun  http://byoos.net
@@ -221,4 +221,14 @@ replace  with  hash_password( ..., BCRYPT) fonction PHP7
 						// Create an hashes for this valid data
 						$keywords['admin']['admin_password'] = password_hash($data['admin_password'], PASSWORD_BCRYPT );
 						$keywords['admin']['admin_hashkey'] = password_hash($data['admin_username'].$keywords['admin']['admin_password'].$data['admin_email'] , PASSWORD_BCRYPT);   
+						$keywords['admin']['admin_hashkey'] = password_hash($data['admin_username'].$keywords['admin']['admin_password'].$data['admin_email'] , PASSWORD_BCRYPT);   
+
+
+IN   /root/nodcms/language/french/...
+French language is not supported
+
+FIX
+Translate english to french language with   DEEPL
+
+
 ********** END debug *************

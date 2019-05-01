@@ -1,5 +1,5 @@
-## miration NodCMS version 2.0  BYOOS solutions  http://byoos.net
-use  php 7.3 - auth  BCRYPT - codeIgniter 3.1.10 - rewrite  sessions
+## migration NodCMS version 2.0  BYOOS solutions  http://byoos.net
+use  php 7.3 - auth  BCRYPT - codeIgniter 3.1.10 - rewrite  sessions - Mysqli - translate in French language
 gbobard@gmail.com   2019
 
 
