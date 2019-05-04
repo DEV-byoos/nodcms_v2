@@ -767,7 +767,7 @@ class Nodcms_general_admin extends NodCMS_Controller {
             }elseif($type==1){
                 $folder = "logo/";
                 $config['upload_path'] ='upload_file/'.$folder;
-                $config['allowed_types'] = 'gif|jpg|png';
+                $config['allowed_types'] = 'gif|jpg|jpeg|png';
                 $this->load->library('upload', $config);
                 if ( ! $this->upload->do_upload("file"))
                 {
